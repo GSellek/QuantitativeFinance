@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass(frozen=True)
-class EuropeanOption:
+class BinaryOption:
     spot: float
     strike: float
     maturity: float
@@ -9,3 +9,4 @@ class EuropeanOption:
     dividend_yield: float
     volatility: float
     option_type: str
+    payout: float

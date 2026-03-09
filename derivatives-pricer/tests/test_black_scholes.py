@@ -1,5 +1,5 @@
-from derivatives_pricer.domain.instruments.binary_option import BinaryOption
-from derivatives_pricer.domain.instruments.european_option import EuropeanOption
+from derivatives_pricer.domain.instruments.options.binary_option import BinaryOption
+from derivatives_pricer.domain.instruments.options.european_option import EuropeanOption
 from derivatives_pricer.domain.models.black_scholes import BlackScholesModel
 
 
@@ -80,9 +80,25 @@ def test_black_scholes_binary_call():
         payout=1.0
     )
 
-    price = BlackScholesModel.price_binary(option)
+    model = BlackScholesModel()
+
+    price = model.price_binary(option)
+    delta = model.delta_binary(option)
+    gamma = model.gamma_binary(option)
+    speed = model.speed_binary(option)
+    vega = model.vega_binary(option)
+    theta = model.theta_binary(option)
+    rho_rate = model.rho_rate_binary(option)
+    rho_dividend_yield = model.rho_dividend_yield_binary(option)
 
     assert round(price, 6) == 0.393348
+    assert round(delta, 6) == 0.018951
+    assert round(gamma, 8) == 0.00004738
+    assert round(speed, 8) ==  -0.00004773
+    assert round(vega, 6) == 0.094753
+    assert round(theta, 6) == 0.055243
+    assert round(rho_rate, 6) == 1.501710
+    assert round(rho_dividend_yield, 6) == -1.895058
 
 def test_black_scholes_binary_put():
 
@@ -97,6 +113,22 @@ def test_black_scholes_binary_put():
         payout=1.0
     )
 
-    price = BlackScholesModel.price_binary(option)
+    model = BlackScholesModel()
+
+    price = model.price_binary(option)
+    delta = model.delta_binary(option)
+    gamma = model.gamma_binary(option)
+    speed = model.speed_binary(option)
+    vega = model.vega_binary(option)
+    theta = model.theta_binary(option)
+    rho_rate = model.rho_rate_binary(option)
+    rho_dividend_yield = model.rho_dividend_yield_binary(option)
 
     assert round(price, 6) == 0.586851
+    assert round(delta, 6) == -0.018951
+    assert round(gamma, 8) == -0.00004738
+    assert round(speed, 8) == 0.00004773
+    assert round(vega, 6) == -0.094753
+    assert round(theta, 6) == -0.035639
+    assert round(rho_rate, 6) == -2.481909
+    assert round(rho_dividend_yield, 6) == 1.895058
