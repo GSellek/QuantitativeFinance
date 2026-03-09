@@ -15,14 +15,16 @@ def test_black_scholes_european_call():
         option_type="call"
     )
 
-    price = BlackScholesModel.price_european(option)
-    delta = BlackScholesModel.delta_european(option)
-    gamma = BlackScholesModel.gamma_european(option)
-    speed = BlackScholesModel.speed_european(option)
-    vega = BlackScholesModel.vega_european(option)
-    theta = BlackScholesModel.theta_european(option)
-    rho_rate = BlackScholesModel.rho_rate_european(option)
-    rho_dividend_yield = BlackScholesModel.rho_dividend_yield_european(option)
+    model = BlackScholesModel()
+
+    price = model.price_european(option)
+    delta = model.delta_european(option)
+    gamma = model.gamma_european(option)
+    speed = model.speed_european(option)
+    vega = model.vega_european(option)
+    theta = model.theta_european(option)
+    rho_rate = model.rho_rate_european(option)
+    rho_dividend_yield = model.rho_dividend_yield_european(option)
 
     assert round(price, 6) == 6.330081
     assert round(delta, 6) == 0.456648
@@ -45,14 +47,16 @@ def test_black_scholes_european_put():
         option_type="put"
     )
 
-    price = BlackScholesModel.price_european(option)
-    delta = BlackScholesModel.delta_european(option)
-    gamma = BlackScholesModel.gamma_european(option)
-    speed = BlackScholesModel.speed_european(option)
-    vega = BlackScholesModel.vega_european(option)
-    theta = BlackScholesModel.theta_european(option)
-    rho_rate = BlackScholesModel.rho_rate_european(option)
-    rho_dividend_yield = BlackScholesModel.rho_dividend_yield_european(option)
+    model = BlackScholesModel()
+
+    price = model.price_european(option)
+    delta = model.delta_european(option)
+    gamma = model.gamma_european(option)
+    speed = model.speed_european(option)
+    vega = model.vega_european(option)
+    theta = model.theta_european(option)
+    rho_rate = model.rho_rate_european(option)
+    rho_dividend_yield = model.rho_dividend_yield_european(option)
 
     assert round(price, 6) == 9.227006
     assert round(delta, 6) == -0.494581
