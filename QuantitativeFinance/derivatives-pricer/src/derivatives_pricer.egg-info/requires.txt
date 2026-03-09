@@ -1,7 +1,0 @@
-numpy
-scipy
-fastapi
-uvicorn
-streamlit
-requests
-pytest
