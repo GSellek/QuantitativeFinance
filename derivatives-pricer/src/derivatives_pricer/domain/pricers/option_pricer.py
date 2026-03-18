@@ -3,82 +3,37 @@ class OptionPricer:
     def __init__(self, model):
         self.model = model
 
-    def price(self, option):
+    def _dispatch(self, metric: str, option) -> float:
+        key = option.instrument_key
+        method_name = f"{metric}_{key}"
+        method = getattr(self.model, method_name, None)
+        if method is None:
+            raise ValueError(
+                f"Model '{type(self.model).__name__}' does not support "
+                f"'{method_name}' for instrument '{type(option).__name__}'"
+            )
+        return method(option)
 
-        if option.__class__.__name__ == "EuropeanOption":
-            return self.model.price_european(option)
+    def price(self, option) -> float:
+        return self._dispatch(metric="price", option=option)
 
-        if option.__class__.__name__ == "BinaryOption":
-            return self.model.price_binary(option)
+    def delta(self, option) -> float:
+        return self._dispatch(metric="delta", option=option)
 
-        raise ValueError("Unsupported instrument type")
+    def gamma(self, option) -> float:
+        return self._dispatch(metric="gamma", option=option)
 
-    def delta(self, option):
+    def speed(self, option) -> float:
+        return self._dispatch(metric="speed", option=option)
 
-        if option.__class__.__name__ == "EuropeanOption":
-            return self.model.delta_european(option)
+    def vega(self, option) -> float:
+        return self._dispatch(metric="vega", option=option)
 
-        if option.__class__.__name__ == "BinaryOption":
-            return self.model.delta_binary(option)
+    def theta(self, option) -> float:
+        return self._dispatch(metric="theta", option=option)
 
-        raise ValueError("Unsupported instrument type")
+    def rho_rate(self, option) -> float:
+        return self._dispatch(metric="rho_rate", option=option)
 
-    def gamma(self, option):
-
-        if option.__class__.__name__ == "EuropeanOption":
-            return self.model.gamma_european(option)
-
-        if option.__class__.__name__ == "BinaryOption":
-            return self.model.gamma_binary(option)
-
-        raise ValueError("Unsupported instrument type")
-
-    def speed(self, option):
-
-        if option.__class__.__name__ == "EuropeanOption":
-            return self.model.speed_european(option)
-
-        if option.__class__.__name__ == "BinaryOption":
-            return self.model.speed_binary(option)
-
-        raise ValueError("Unsupported instrument type")
-
-    def vega(self, option):
-
-        if option.__class__.__name__ == "EuropeanOption":
-            return self.model.vega_european(option)
-
-        if option.__class__.__name__ == "BinaryOption":
-            return self.model.vega_binary(option)
-
-        raise ValueError("Unsupported instrument type")
-
-    def theta(self, option):
-
-        if option.__class__.__name__ == "EuropeanOption":
-            return self.model.theta_european(option)
-
-        if option.__class__.__name__ == "BinaryOption":
-            return self.model.theta_binary(option)
-
-        raise ValueError("Unsupported instrument type")
-
-    def rho_rate(self, option):
-
-        if option.__class__.__name__ == "EuropeanOption":
-            return self.model.rho_rate_european(option)
-
-        if option.__class__.__name__ == "BinaryOption":
-            return self.model.rho_rate_binary(option)
-
-        raise ValueError("Unsupported instrument type")
-
-    def rho_dividend_yield(self, option):
-
-        if option.__class__.__name__ == "EuropeanOption":
-            return self.model.rho_dividend_yield_european(option)
-
-        if option.__class__.__name__ == "BinaryOption":
-            return self.model.rho_dividend_yield_binary(option)
-
-        raise ValueError("Unsupported instrument type")
+    def rho_dividend_yield(self, option) -> float:
+        return self._dispatch(metric="rho_dividend_yield", option=option)

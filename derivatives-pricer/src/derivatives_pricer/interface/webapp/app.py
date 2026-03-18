@@ -3,7 +3,10 @@ import requests
 
 st.title("Option Pricer")
 
-product_type = st.selectbox("Product Type", ["European", "Binary"])
+product_type = st.selectbox(
+    "Product Type",
+    ["European Option", "Binary Option", "Interest Rate Swap"]
+)
 spot = st.number_input("Spot", value=100.0)
 strike = st.number_input("Strike", value=100.0)
 maturity = st.number_input("Maturity (years)", value=1.0)

@@ -10,3 +10,5 @@ class EuropeanOption:
     dividend_yield: float
     volatility: float
     option_type: str
+
+    instrument_key: str = "european"

@@ -14,6 +14,7 @@ class EuropeanOptionPricingRequest(BaseModel):
     dividend_yield: float = 0.05
     volatility: float = 0.2
     option_type: str = "call"
+    pricing_model: str = "black_scholes"
 
 @app.post("/price/european")
 def price_european_option(request: EuropeanOptionPricingRequest):
@@ -47,6 +48,7 @@ class BinaryOptionPricingRequest(BaseModel):
     volatility: float = 0.2
     option_type: str = "call"
     payout: float = 1.0
+    pricing_model: str = "black_scholes"
 
 
 @app.post("/price/binary")
@@ -70,3 +72,17 @@ def price_binary_option(request: BinaryOptionPricingRequest):
         "rho_rate": rho_rate,
         "rho_dividend_yield": rho_dividend_yield
     }
+
+class SwapPricingRequest(BaseModel):
+    notional: float
+    fixed_rate: float
+    payment_dates: list[float]
+    rate: float
+    floating_spread: float = 0.0
+    fixed_rate_payer: bool = True
+
+
+@app.post("/price/swap")
+def price_interest_rate_swap(request: SwapPricingRequest):
+    price = pricing_service.price_interest_rate_swap(request.dict())
+    return {"price": price}
