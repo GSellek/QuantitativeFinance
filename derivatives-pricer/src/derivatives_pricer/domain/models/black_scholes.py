@@ -1,11 +1,19 @@
 import numpy as np
 from scipy.stats import norm
 
+from derivatives_pricer.domain.models.pricing_model import PricingModel
 
-class BlackScholesModel:
+_VALID_OPTION_TYPES = {"call", "put"}
+
+
+def _validate_option_type(option_type: str) -> None:
+    if option_type not in _VALID_OPTION_TYPES:
+        raise ValueError(f"Invalid option type '{option_type}'. Expected one of {_VALID_OPTION_TYPES}.")
+
+class BlackScholesModel(PricingModel):
 
     @staticmethod
-    def d1(option):
+    def d1(option) -> float:
         spot = option.spot
         strike = option.strike
         tenor = option.maturity
@@ -17,7 +25,7 @@ class BlackScholesModel:
 
         return d1
 
-    def d2(self, option):
+    def d2(self, option) -> float:
         tenor = option.maturity
         sigma = option.volatility
 
@@ -28,7 +36,7 @@ class BlackScholesModel:
         return d2
 
     @staticmethod
-    def discount_factor(option):
+    def discount_factor(option) -> float:
         tenor = option.maturity
         rate = option.rate
 
@@ -37,7 +45,7 @@ class BlackScholesModel:
         return discount_factor
 
     @staticmethod
-    def dividend_yield_factor(option):
+    def dividend_yield_factor(option) -> float:
         tenor = option.maturity
         dividend_yield = option.dividend_yield
 
@@ -45,7 +53,8 @@ class BlackScholesModel:
 
         return dividend_yield_factor
 
-    def price_european(self, option):
+    def price_european(self, option) -> float:
+        _validate_option_type(option.option_type)
         spot = option.spot
         strike = option.strike
 
@@ -56,27 +65,25 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             price = spot * dividend_yield_factor * norm.cdf(d1) - strike * discount_factor * norm.cdf(d2)
-        elif option.option_type == "put":
-            price = strike * discount_factor * norm.cdf(-d2) - spot * dividend_yield_factor * norm.cdf(-d1)
         else:
-            raise ValueError("Invalid option type")
+            price = strike * discount_factor * norm.cdf(-d2) - spot * dividend_yield_factor * norm.cdf(-d1)
 
         return price
 
-    def delta_european(self, option):
+    def delta_european(self, option) -> float:
+        _validate_option_type(option.option_type)
         d1 = self.d1(option)
         dividend_yield_factor = self.dividend_yield_factor(option)
 
         if option.option_type == "call":
             delta = dividend_yield_factor * norm.cdf(d1)
-        elif option.option_type == "put":
-            delta = dividend_yield_factor * (norm.cdf(d1) - 1)
         else:
-            raise ValueError("Invalid option type")
+            delta = dividend_yield_factor * (norm.cdf(d1) - 1)
 
         return delta
 
-    def gamma_european(self, option):
+    def gamma_european(self, option) -> float:
+        _validate_option_type(option.option_type)
         spot = option.spot
         tenor = option.maturity
         sigma = option.volatility
@@ -84,14 +91,12 @@ class BlackScholesModel:
         d1 = self.d1(option)
         dividend_yield_factor = self.dividend_yield_factor(option)
 
-        if option.option_type == "call" or option.option_type == "put":
-            gamma = (dividend_yield_factor * norm.pdf(d1)) / (spot * sigma * np.sqrt(tenor))
-        else:
-            raise ValueError("Invalid option type")
+        gamma = (dividend_yield_factor * norm.pdf(d1)) / (spot * sigma * np.sqrt(tenor))
 
         return gamma
 
-    def speed_european(self, option):
+    def speed_european(self, option) -> float:
+        _validate_option_type(option.option_type)
         spot = option.spot
         tenor = option.maturity
         sigma = option.volatility
@@ -99,28 +104,24 @@ class BlackScholesModel:
         d1 = self.d1(option)
         dividend_yield_factor = self.dividend_yield_factor(option)
 
-        if option.option_type == "call" or option.option_type == "put":
-            speed = -(dividend_yield_factor * norm.pdf(d1)) / (sigma ** 2 * spot ** 2 * tenor) * (d1 + sigma * np.sqrt(tenor))
-        else:
-            raise ValueError("Invalid option type")
+        speed = -(dividend_yield_factor * norm.pdf(d1)) / (sigma ** 2 * spot ** 2 * tenor) * (d1 + sigma * np.sqrt(tenor))
 
         return speed
 
-    def vega_european(self, option):
+    def vega_european(self, option) -> float:
+        _validate_option_type(option.option_type)
         spot = option.spot
         tenor = option.maturity
 
         d1 = self.d1(option)
         dividend_yield_factor = self.dividend_yield_factor(option)
 
-        if option.option_type == "call" or option.option_type == "put":
-            vega = spot * dividend_yield_factor * norm.pdf(d1) * np.sqrt(tenor)
-        else:
-            raise ValueError("Invalid option type")
+        vega = spot * dividend_yield_factor * norm.pdf(d1) * np.sqrt(tenor)
 
         return vega
 
-    def theta_european(self, option):
+    def theta_european(self, option) -> float:
+        _validate_option_type(option.option_type)
         spot = option.spot
         strike = option.strike
         tenor = option.maturity
@@ -135,14 +136,13 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             theta = -sigma * spot * dividend_yield_factor * norm.pdf(d1) / (2 * np.sqrt(tenor)) + dividend_yield * spot * norm.cdf(d1) * dividend_yield_factor - rate * strike * discount_factor * norm.cdf(d2)
-        elif option.option_type == "put":
-            theta = -sigma * spot * dividend_yield_factor * norm.pdf(-d1) / (2 * np.sqrt(tenor)) - dividend_yield * spot * norm.cdf(-d1) * dividend_yield_factor + rate * strike * discount_factor * norm.cdf(-d2)
         else:
-            raise ValueError("Invalid option type")
+            theta = -sigma * spot * dividend_yield_factor * norm.pdf(-d1) / (2 * np.sqrt(tenor)) - dividend_yield * spot * norm.cdf(-d1) * dividend_yield_factor + rate * strike * discount_factor * norm.cdf(-d2)
 
         return theta
 
-    def rho_rate_european(self, option):
+    def rho_rate_european(self, option) -> float:
+        _validate_option_type(option.option_type)
         strike = option.strike
         tenor = option.maturity
 
@@ -151,14 +151,13 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             rho_rate = strike * tenor * discount_factor * norm.cdf(d2)
-        elif option.option_type == "put":
-            rho_rate = -strike * tenor * discount_factor * norm.cdf(-d2)
         else:
-            raise ValueError("Invalid option type")
+            rho_rate = -strike * tenor * discount_factor * norm.cdf(-d2)
 
         return rho_rate
 
-    def rho_dividend_yield_european(self, option):
+    def rho_dividend_yield_european(self, option) -> float:
+        _validate_option_type(option.option_type)
         spot = option.spot
         tenor = option.maturity
 
@@ -167,14 +166,13 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             rho_dividend_yield = -tenor * spot * dividend_yield_factor * norm.cdf(d1)
-        elif option.option_type == "put":
-            rho_dividend_yield = tenor * spot * dividend_yield_factor * norm.cdf(-d1)
         else:
-            raise ValueError("Invalid option type")
+            rho_dividend_yield = tenor * spot * dividend_yield_factor * norm.cdf(-d1)
 
         return rho_dividend_yield
 
     def price_binary(self, option) -> float:
+        _validate_option_type(option.option_type)
         payout = option.payout
 
         d2 = self.d2(option)
@@ -182,14 +180,13 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             price = payout * discount_factor * norm.cdf(d2)
-        elif option.option_type == "put":
-            price = payout * discount_factor * norm.cdf(-d2)
         else:
-            raise ValueError("Invalid option type")
+            price = payout * discount_factor * norm.cdf(-d2)
 
         return price
 
     def delta_binary(self, option) -> float:
+        _validate_option_type(option.option_type)
         spot = option.spot
         tenor = option.maturity
         sigma = option.volatility
@@ -199,14 +196,13 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             delta = (discount_factor * norm.pdf(d2)) / (sigma * spot * np.sqrt(tenor))
-        elif option.option_type == "put":
-            delta = - (discount_factor * norm.pdf(d2)) / (sigma * spot * np.sqrt(tenor))
         else:
-            raise ValueError("Invalid option type")
+            delta = - (discount_factor * norm.pdf(d2)) / (sigma * spot * np.sqrt(tenor))
 
         return delta
 
-    def gamma_binary(self, option):
+    def gamma_binary(self, option) -> float:
+        _validate_option_type(option.option_type)
         spot = option.spot
         tenor = option.maturity
         sigma = option.volatility
@@ -217,14 +213,13 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             gamma = - (discount_factor * d1 * norm.pdf(d2)) / (sigma ** 2 * spot ** 2 * tenor)
-        elif option.option_type == "put":
-            gamma = (discount_factor * d1 * norm.pdf(d2)) / (sigma ** 2 * spot ** 2 * tenor)
         else:
-            raise ValueError("Invalid option type")
+            gamma = (discount_factor * d1 * norm.pdf(d2)) / (sigma ** 2 * spot ** 2 * tenor)
 
         return gamma
 
-    def speed_binary(self, option):
+    def speed_binary(self, option) -> float:
+        _validate_option_type(option.option_type)
         spot = option.spot
         tenor = option.maturity
         sigma = option.volatility
@@ -235,14 +230,13 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             speed = - (discount_factor * norm.pdf(d2)) / (sigma ** 2 * spot ** 3 * tenor) * (-2 * d1 + (1 - d1 * d2) / (sigma * np.sqrt(tenor)))
-        elif option.option_type == "put":
-            speed = (discount_factor * norm.pdf(d2)) / (sigma ** 2 * spot ** 3 * tenor) * (-2 * d1 + (1 - d1 * d2) / (sigma * np.sqrt(tenor)))
         else:
-            raise ValueError("Invalid option type")
+            speed = (discount_factor * norm.pdf(d2)) / (sigma ** 2 * spot ** 3 * tenor) * (-2 * d1 + (1 - d1 * d2) / (sigma * np.sqrt(tenor)))
 
         return speed
 
-    def vega_binary(self, option):
+    def vega_binary(self, option) -> float:
+        _validate_option_type(option.option_type)
         tenor = option.maturity
         sigma = option.volatility
 
@@ -251,14 +245,13 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             vega = - discount_factor * norm.pdf(d2) * (np.sqrt(tenor) + d2 / sigma)
-        elif option.option_type == "put":
-            vega = discount_factor * norm.pdf(d2) * (np.sqrt(tenor) + d2 / sigma)
         else:
-            raise ValueError("Invalid option type")
+            vega = discount_factor * norm.pdf(d2) * (np.sqrt(tenor) + d2 / sigma)
 
         return vega
 
-    def theta_binary(self, option):
+    def theta_binary(self, option) -> float:
+        _validate_option_type(option.option_type)
         tenor = option.maturity
         rate = option.rate
         dividend_yield = option.dividend_yield
@@ -270,14 +263,13 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             theta = rate * discount_factor * norm.cdf(d2) + discount_factor * norm.pdf(d2) * (d1 / (2 * tenor) - (rate - dividend_yield) / (sigma * np.sqrt(tenor)))
-        elif option.option_type == "put":
-            theta = rate * discount_factor * (1 - norm.cdf(d2)) - discount_factor * norm.pdf(d2) * (d1 / (2 * tenor) - (rate - dividend_yield) / (sigma * np.sqrt(tenor)))
         else:
-            raise ValueError("Invalid option type")
+            theta = rate * discount_factor * (1 - norm.cdf(d2)) - discount_factor * norm.pdf(d2) * (d1 / (2 * tenor) - (rate - dividend_yield) / (sigma * np.sqrt(tenor)))
 
         return theta
 
-    def rho_rate_binary(self, option):
+    def rho_rate_binary(self, option) -> float:
+        _validate_option_type(option.option_type)
         tenor = option.maturity
         sigma= option.volatility
 
@@ -286,14 +278,13 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             rho_rate = - tenor * discount_factor * norm.cdf(d2) + np.sqrt(tenor) / sigma * discount_factor * norm.pdf(d2)
-        elif option.option_type == "put":
-            rho_rate = - tenor * discount_factor * (1 - norm.cdf(d2)) - np.sqrt(tenor) / sigma * discount_factor * norm.pdf(d2)
         else:
-            raise ValueError("Invalid option type")
+            rho_rate = - tenor * discount_factor * (1 - norm.cdf(d2)) - np.sqrt(tenor) / sigma * discount_factor * norm.pdf(d2)
 
         return rho_rate
 
-    def rho_dividend_yield_binary(self, option):
+    def rho_dividend_yield_binary(self, option) -> float:
+        _validate_option_type(option.option_type)
         tenor = option.maturity
         sigma = option.volatility
 
@@ -302,9 +293,7 @@ class BlackScholesModel:
 
         if option.option_type == "call":
             rho_dividend_yield = - np.sqrt(tenor) / sigma * discount_factor * norm.pdf(d2)
-        elif option.option_type == "put":
-            rho_dividend_yield = np.sqrt(tenor) / sigma * discount_factor * norm.pdf(d2)
         else:
-            raise ValueError("Invalid option type")
+            rho_dividend_yield = np.sqrt(tenor) / sigma * discount_factor * norm.pdf(d2)
 
         return rho_dividend_yield
