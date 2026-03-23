@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 
 from derivatives_pricer.domain.instruments.options.binary_option import BinaryOption
 from derivatives_pricer.domain.instruments.options.european_option import EuropeanOption
@@ -14,6 +15,13 @@ from derivatives_pricer.domain.pricers.swap_pricer import SwapPricer
 _DEFAULT_MODEL = "black_scholes"
 
 
+class Position(str, Enum):
+    BUY = "buy"
+    SELL = "sell"
+
+    def sign(self) -> int:
+        return 1 if self == Position.BUY else -1
+
 @dataclass
 class EuropeanOptionRequest:
     spot: float
@@ -23,6 +31,8 @@ class EuropeanOptionRequest:
     dividend_yield: float
     volatility: float
     option_type: str
+    position: Position = Position.BUY
+    contracts_number: int = 1
     pricing_model: str = _DEFAULT_MODEL
 
     @classmethod
@@ -35,6 +45,8 @@ class EuropeanOptionRequest:
             dividend_yield=data["dividend_yield"],
             volatility=data["volatility"],
             option_type=data["option_type"],
+            position=Position(data.get("position", Position.BUY)),
+            contracts_number=data.get("contracts_number", 1),
             pricing_model=data.get("pricing_model", _DEFAULT_MODEL),
         )
 
@@ -57,6 +69,8 @@ class SwapRequest:
     rate: float
     floating_spread: float = 0.0
     fixed_rate_payer: bool = True
+    position: Position = Position.BUY
+    contracts_number: int = 1
 
     @classmethod
     def from_dict(cls, data: dict) -> "SwapRequest":
@@ -67,7 +81,13 @@ class SwapRequest:
             rate=data["rate"],
             floating_spread=data.get("floating_spread", 0.0),
             fixed_rate_payer=data.get("fixed_rate_payer", True),
+            position=Position(data.get("position", Position.BUY)),
+            contracts_number=data.get("contracts_number", 1),
         )
+
+
+def _apply_position(raw_price: float, position: Position, contracts_number: int) -> float:
+    return raw_price * contracts_number * position.sign()
 
 
 class PricingService:
@@ -111,7 +131,9 @@ class PricingService:
         else:
             raise ValueError(f"Unknown option class: {option_cls}")
 
-        return pricer._dispatch(metric, instrument)
+        raw_metric = pricer._dispatch(metric, instrument)
+
+        return _apply_position(raw_metric, req.position, req.contracts_number)
 
     def price_european_option(self, request: dict) -> float:
         return self._compute_option_metric("price", request, "european")
@@ -168,4 +190,6 @@ class PricingService:
             payment_dates=req.payment_dates, floating_spread=req.floating_spread,
             fixed_rate_payer=req.fixed_rate_payer,
         )
-        return SwapPricer(YieldCurve(rate=req.rate)).price(swap)
+        raw_metric = SwapPricer(YieldCurve(rate=req.rate)).price(swap)
+
+        return _apply_position(raw_metric, req.position, req.contracts_number)

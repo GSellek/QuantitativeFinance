@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from derivatives_pricer.app.pricing_service import PricingService
+from derivatives_pricer.app.pricing_service import Position, PricingService, _DEFAULT_MODEL
 
 app = FastAPI(title="Derivatives Pricer API")
 
@@ -14,7 +14,9 @@ class EuropeanOptionPricingRequest(BaseModel):
     dividend_yield: float = 0.05
     volatility: float = 0.2
     option_type: str = "call"
-    pricing_model: str = "black_scholes"
+    position: Position = Position.BUY
+    contracts_number: int = 1
+    pricing_model: str = _DEFAULT_MODEL
 
 @app.post("/price/european")
 def price_european_option(request: EuropeanOptionPricingRequest):
@@ -48,7 +50,9 @@ class BinaryOptionPricingRequest(BaseModel):
     volatility: float = 0.2
     option_type: str = "call"
     payout: float = 1.0
-    pricing_model: str = "black_scholes"
+    position: Position = Position.BUY
+    contracts_number: int = 1
+    pricing_model: str = _DEFAULT_MODEL
 
 
 @app.post("/price/binary")
@@ -80,6 +84,8 @@ class SwapPricingRequest(BaseModel):
     rate: float
     floating_spread: float = 0.0
     fixed_rate_payer: bool = True
+    position: Position = Position.BUY
+    contracts_number: int = 1
 
 
 @app.post("/price/swap")
